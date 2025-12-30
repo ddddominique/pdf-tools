@@ -1,0 +1,49 @@
+# ----------------------------
+# Dependencies
+# ----------------------------
+node_modules/
+
+# ----------------------------
+# Build output
+# ----------------------------
+dist/
+build/
+out/
+.next/
+
+# ----------------------------
+# Environment variables
+# ----------------------------
+.env
+.env.local
+.env.development
+.env.production
+
+# ----------------------------
+# Logs
+# ----------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# ----------------------------
+# OS / Editor files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+# ----------------------------
+# Testing / coverage
+# ----------------------------
+coverage/
+
+# ----------------------------
+# Optional cache files
+# ----------------------------
+.cache/
+.parcel-cache/
