@@ -30,7 +30,17 @@ app.get("/health", (req, res) => {
 });
 
 app.post("api/pdf/apply", upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) { return res.status(400).json({ error: "No file uploaded" }); }
+        if (!req.body.actions) { return res.status(400).json({ error: "No actions provided" }); }
 
+        const parsed = ActionsSchema.safeParse(JSON.parse(req.body.actions));
+        if (!parsed.success) {
+            return res.status(400).json({ error: "Invalid actions format", details: parsed.error.errors });
+        }
+
+        
+    }
 });
 
 const PORT = process.env.PORT || 3000;
