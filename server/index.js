@@ -39,7 +39,7 @@ app.post("api/pdf/apply", upload.single("file"), async (req, res) => {
             return res.status(400).json({ error: "Invalid actions format", details: parsed.error.errors });
         }
 
-        
+        const pdfDoc = await PDFDocument.load(req.file.buffer);
     }
 });
 
