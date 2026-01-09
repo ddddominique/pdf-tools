@@ -24,6 +24,9 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<{width: number; height: number; scale: number} | null>(null);
   const pdfRef = useRef<any>(null);
+  const renderingRef = useRef<boolean>(false);
+  const pendingRef = useRef<boolean>(false);
+  const actionsRef = useRef<AddTextAction[]>([]);
 
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function App() {
     ctx.save();
     const scaledFontSize = 18 * scale;
     ctx.font = `${scaledFontSize}px Arial`;
-    for (const a of actions) {
+    for (const a of actionsRef.current) {
       const xCanvas = a.x * scale;
       const yCanvas = canvas.height - a.y * scale;
       ctx.fillText(a.text, xCanvas, yCanvas);
@@ -94,16 +97,30 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!pdfRef.current || isRendering) return;
-    (async () => {
+    if (!pdfRef.current) return;
+    actionsRef.current = actions;
+
+    const run = async () => {
+      if (renderingRef.current) {
+        pendingRef.current = true;
+        return;
+      }
+      renderingRef.current = true;
       setIsRendering(true);
       try {
         await renderPage(pdfRef.current);
       } finally {
+        renderingRef.current = false;
         setIsRendering(false);
+        if (pendingRef.current) {
+          pendingRef.current = false;
+          run();
+        }
       }
-    })();
-  }, [actions, isRendering]);
+    };
+
+    run();
+  }, [actions]);
 
   async function exportPdf() {
     if (!file) return;
