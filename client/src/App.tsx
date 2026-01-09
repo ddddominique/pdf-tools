@@ -23,6 +23,7 @@ export default function App() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<{width: number; height: number; scale: number} | null>(null);
+  const pdfRef = useRef<any>(null);
 
 
   useEffect(() => {
@@ -33,29 +34,45 @@ export default function App() {
     })();
   }, [file]);
 
+  async function renderPage(pdf: any) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const scale = viewportRef.current?.scale ?? 1.5;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale });
+    viewportRef.current = { width: viewport.width, height: viewport.height, scale };
+
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    await page.render({ canvas, viewport }).promise;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.save();
+    const scaledFontSize = 18 * scale;
+    ctx.font = `${scaledFontSize}px Arial`;
+    for (const a of actions) {
+      const xCanvas = a.x * scale;
+      const yCanvas = canvas.height - a.y * scale;
+      ctx.fillText(a.text, xCanvas, yCanvas);
+    }
+    ctx.restore();
+  }
+
   useEffect(() => {
     if (!pdfData) return;
     (async () => {
       setIsRendering(true);
-      try{
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) });
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      const scale = 1.5;
-      const viewport = page.getViewport({ scale });
-      viewportRef.current = { width: viewport.width, height: viewport.height, scale };
-
-      const canvas = canvasRef.current ;
-      if (!canvas) return;
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-      await page.render({ canvas, viewport }).promise;
-      }
-      finally {
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) });
+        const pdf = await loadingTask.promise;
+        pdfRef.current = pdf;
+        await renderPage(pdf);
+      } finally {
         setIsRendering(false);
       }
     })();
-  }, [pdfData]) ; 
+  }, [pdfData]);
 
 
   function onCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -76,31 +93,17 @@ export default function App() {
     ])
   }
 
-  useEffect(()=> {
-    if (!pdfData || !canvasRef.current || !viewportRef.current) return;
-
+  useEffect(() => {
+    if (!pdfRef.current || isRendering) return;
     (async () => {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) });
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      const canvas = canvasRef.current!;
-
-      const scale = viewportRef.current!.scale;
-      const viewport = page.getViewport({ scale });
-      const ctx = canvas.getContext("2d")!;
-      await page.render({ canvas, viewport }).promise;
-
-      ctx.save();
-      const scaledFontSize = 18 * scale;
-      ctx.font = `${scaledFontSize}px Arial`;
-      for (const a of actions) {
-        const xCanvas = a.x * scale;
-        const yCanvas = canvas.height - a.y * scale;
-        ctx.fillText(a.text, xCanvas, yCanvas);
+      setIsRendering(true);
+      try {
+        await renderPage(pdfRef.current);
+      } finally {
+        setIsRendering(false);
       }
-      ctx.restore();
     })();
-  }, [actions, pdfData, isRendering])
+  }, [actions, isRendering]);
 
   async function exportPdf() {
     if (!file) return;
