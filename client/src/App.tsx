@@ -66,11 +66,13 @@ export default function App() {
     const xCanvas = (e.clientX - rect.left) * (canvas.width / rect.width);
     const yCanvas = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-    const yPdf = canvas.height - yCanvas;
+    const scale = viewportRef.current.scale;
+    const xPdf = xCanvas / scale;
+    const yPdf = (canvas.height - yCanvas) / scale;
 
     setActions((prev) => [
       ...prev,
-      {type: "addText", page: 0, x:xCanvas, y: yPdf, text: textToPlace, size: 18},
+      {type: "addText", page: 0, x: xPdf, y: yPdf, text: textToPlace, size: 18},
     ])
   }
 
@@ -89,10 +91,12 @@ export default function App() {
       await page.render({ canvas, viewport }).promise;
 
       ctx.save();
-      ctx.font = "18px Arial";
+      const scaledFontSize = 18 * scale;
+      ctx.font = `${scaledFontSize}px Arial`;
       for (const a of actions) {
-        const yCanvas = canvas.height - a.y;
-        ctx.fillText(a.text, a.x, yCanvas);
+        const xCanvas = a.x * scale;
+        const yCanvas = canvas.height - a.y * scale;
+        ctx.fillText(a.text, xCanvas, yCanvas);
       }
       ctx.restore();
     })();
