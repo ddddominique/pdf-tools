@@ -387,7 +387,7 @@ export default function AddTextPage() {
               type="file"
               accept="application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-[240px]"
+              className="w-[240px] cursor-pointer"
             />
             <Button
               variant={isTextMode ? "default" : "outline"}

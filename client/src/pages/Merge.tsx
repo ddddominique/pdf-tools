@@ -83,7 +83,13 @@ export default function MergePage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Input type="file" accept="application/pdf" multiple onChange={onFilesSelected} />
+            <Input
+              type="file"
+              accept="application/pdf"
+              multiple
+              onChange={onFilesSelected}
+              className="cursor-pointer"
+            />
             <Button onClick={mergePdfs} disabled={!items.length || isMerging}>
               {isMerging ? "Merging..." : "Merge PDFs"}
             </Button>
